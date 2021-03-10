@@ -3,77 +3,92 @@
         <div class="hand-wrapper">
             <Hand class="hand" :rotate="pendulumAngle"/>
         </div>
+        <div class="musicalbar-view">
+            <div v-for="n in oneMusicalBar" :key="n" :class="[{ 'beat-now': (n==beatNow+1) }, 'one-beat']"></div>
+        </div>
         <div class="slider-wrapper">
-        <!--    <vue-slider
-              ref="slider"
-              v-model="bpm"
-              :min="1"
-              :max="255"
-            ></vue-slider>-->
-            <button @click="sound">run</button>
+            <button @click="runMetronome">run</button>
+            <button @click="stopMetronome">stop</button>
         </div>
     </div>
 </template>
 
 <script>
-//import VueSlider from 'vue-slider-component'
-//import 'vue-slider-component/theme/default.css'
 import Hand from './Hand.vue'
 const fs = window.fs;
-//const beat = new Audio('../../public/beat.mp3');
-
+let source;
+let audioContext;
+let toArrayBuffer;
+let textfile;
+let gainNode;
     export default{
         data() {
             return {
                 elapsedTime:0,
-                bpm:60,
                 beat:"",
+                isMetronomeRunning: false,
+                beatTime:0,
+                swingAngle:90,
+                pendulumAngle2:0
             }
         },
         components: {
             Hand,
-          //  VueSlider,
+            //VueSlider,
         },
         props:{
-            //bpm:{
-            //    type: Number,
-            //    default:120
-            //},
+            bpm:{
+                type: Number,
+                default:60
+            },
             fps:{
                 type: Number,
                 default:30
+            },
+            oneMusicalBar:{
+                type: Number,
             }
         },
         computed: {
             pendulumAngle() {
                 const swingAngle = 90;
-                const swingTime = Math.floor(this.elapsedTime/this.oneBeatSec());     //スイングした回数
-                //console.log("swingTime:"+swingTime);
                 const swingProgress = this.elapsedTime%this.oneBeatSec();              //スイングの進捗ミリ秒
-            //    console.log("swingProgress:"+swingProgress);
                 const swingProgressRate = (swingProgress/this.oneBeatSec())*100;    //スイングの進捗割合
-                //console.log("swingProgressRate:"+swingProgressRate);
                 let angle;
             
                 if(swingProgressRate < 50) angle = (swingAngle/2)-((swingAngle/2)*((swingProgressRate*2)/100));
                 else if(swingProgressRate > 50) angle = -(swingAngle/2)*(((swingProgressRate-50)*2)/100);
                 else if (angle == 0) angle = (swingAngle/2);
                 else angle = 0;
-                console.log(swingTime);
-                if((swingTime%2)==1){
+                if(((Math.floor(this.elapsedTime/this.oneBeatSec()))%2)==1){
                     angle = angle*-1;
                 }
-              //  console.log(angle);
                 return Number(angle);
             },
+            beatNow(){
+                return (this.beatTime+this.oneMusicalBar)%this.oneMusicalBar;
+            }
         },
         methods: {
             //一拍の秒数
-            oneBeatSec() {     
+            oneBeatSec() {
                 const sec = (60/this.bpm)*1000;//ミリ秒
-               // console.log("sec:"+sec);
                 return sec;
             },
+            //beatが鳴った回数
+            //beatTime(){
+            //    return Math.floor(this.elapsedTime/this.oneBeatSec());  
+            //},
+            
+           // swing(){
+           //     const swingProgress = this.elapsedTime%this.oneBeatSec();              //スイングの進捗ミリ秒
+           //     const swingProgressRate = (swingProgress/this.oneBeatSec())*100;    //スイングの進捗割合
+           //     
+           //     
+           //     
+           // },
+            
+            
             //再描画間隔
             rerenderInterval() {
                 const interval = 1000/this.fps;
@@ -81,87 +96,76 @@ const fs = window.fs;
             },
             //再帰的に使える用の関数
             elapsedTimeCountUp() {
-                //timerId変数はsetTimeoutの返り値になるので代入する
-                const interval = this.rerenderInterval();
-                window.setTimeout(() =>{
-
-                    //経過時刻は現在時刻をミリ秒で示すDate.now()からstartを押した時の時刻(startTime)を引く
-                    this.elapsedTime = this.elapsedTime+interval;
-                   // console.log("elapsedTime:" + this.elapsedTime);
-                    //countUp関数自身を呼ぶことで10ミリ秒毎に以下の計算を始める
-                    this.elapsedTimeCountUp();
-                //1秒以下の時間を表示するために10ミリ秒後に始めるよう宣言
-                },interval);
-            },
-            setBeat() {
-                this.beat.preload = "auto";
-                this.beat.src = './beat.mp3';
-                this.beat.load();
-                this.soundBeat();
+                if(this.isMetronomeRunning){
+                    const interval = this.rerenderInterval();
+                    window.setTimeout(() =>{
+                        this.elapsedTime = this.elapsedTime+interval;
+                        this.elapsedTimeCountUp();
+                    },interval);
+                }
             },
             soundBeat() {
-               // this.beat.play();
-                this.sound();
-                const interval = this.oneBeatSec();
-                window.setTimeout(() =>{
-                    
-                    this.soundBeat();
-                },interval);
+                let beatVolume = 0.5;
+                console.log(this.oneMusicalBar);
+                if(this.oneMusicalBar!=0 && (this.beatTime%this.oneMusicalBar)==0){
+                    beatVolume = 1;
+                    console.log("aa");
+                }
+                source = audioContext.createBufferSource();
+                audioContext.decodeAudioData(toArrayBuffer(textfile), function(buffer) {
+                    source.buffer = buffer;
+                    gainNode = audioContext.createGain();
+                    source.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    gainNode.gain.value = beatVolume;
+                    source.start(0);
+                });
             },
-            sound() {
-               // let source;
-               // const audioContext = new AudioContext;
-               // const textfile = fs.readFileSync('./public/beat.mp3');
-               //// console.log(textfile);
-               // const toArrayBuffer = function(buf) {
-               //     return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
-               // }
-               // 
-               // audioContext.decodeAudioData(toArrayBuffer(textfile), function(buffer) {
-               //    // console.log("a");
-               //     if (source) {
-               //         source.stop();
-               //     }
-               //     source = audioContext.createBufferSource();
-               //     source.buffer = buffer;
-               //     source.start(0);
-               //     console.log("a");
-               // });
-                
-                let source;
-                let audioContext;
+            beatLoop() {
+                if(this.isMetronomeRunning){
+                   // this.beat.play();
+                    this.beatTime++;
+                    this.elapsedTime = this.beatTime*this.oneBeatSec();
+                    console.log((this.beatTime*this.oneBeatSec())-this.elapsedTime);
+                   // this.elapsedTime = this.beatTime*this.oneBeatSec();
+                    this.soundBeat();
+                    
+                    const interval = this.oneBeatSec();
+                    window.setTimeout(() =>{
+                        
+                        this.beatLoop();
+                    },interval);
+                }
+            },
+            setBeat() {
                 audioContext = new AudioContext;
-                let textfile = fs.readFileSync('./public/beat.mp3', (err) => {
+                textfile = fs.readFileSync('./public/beat.mp3', (err) => {
                         if (err) throw err;
                     });
-                const toArrayBuffer = function(buf) {
+                toArrayBuffer = function(buf) {
                     return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
                 }
-                const analyser = audioContext.createAnalyser();
-                analyser.fftSize = 512;
-                analyser.connect(audioContext.destination);
-                audioContext.decodeAudioData(toArrayBuffer(textfile), function(buffer) {
-                    if (source) {
-                        source.stop();
-                    }
-                    if(audioContext){
-                        source = audioContext.createBufferSource();
-                        source.buffer = buffer;
-                        //source.loop = true;
-                        source.connect(analyser);
-                        source.start(0);
-                        this.loading = false;
-                        this.playbackNow = true;
-                    }else{
-                        this.loading = false;
-                    }
-                }.bind(this));
+            },
+            runMetronome() {
+                if(!this.isMetronomeRunning){
+                    this.isMetronomeRunning = true;
+                    this.setBeat();
+                    this.elapsedTimeCountUp();
+                    this.beatLoop();
+                }
+            },
+            stopMetronome() {
+                if(this.isMetronomeRunning){
+                    this.isMetronomeRunning = false;
+                    this.beatTime = 0;
+                    this.elapsedTime = 0;
+                }
             }
         },
         mounted(){
-           this.elapsedTimeCountUp();
-           this.setBeat();
-           this.soundBeat();
+            //this.elapsedTimeCountUp();
+            //this.setBeat();
+            //this.beatLoop();
         }
     };
 </script>
@@ -170,6 +174,19 @@ const fs = window.fs;
     .metronome-wrapper{
         display: flex;
         flex-direction: column;
+        .musicalbar-view{
+            display: flex;
+            justify-content: space-around;
+            .one-beat{
+                border-radius: 100%;
+                height:10px;
+                width:10px;
+                background:red;
+            }
+            .beat-now{
+                background:black;
+            }
+        }
         .hand-wrapper{
             height:200px;
             .hand {
