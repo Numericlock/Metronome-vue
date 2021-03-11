@@ -37,3 +37,14 @@ import Metronome from '../components/Metronome.vue'; // @ is an alias to /src
         }
     };
 </script>
+<style>
+    .home{
+        display: flex;
+        flex-direction: column;
+        font-weight: bolder;
+        background: linear-gradient(-135deg, #E4A972, #9941D8),
+        linear-gradient(75deg, #E4A972, #9941D8 ,#79ffff)fixed;
+        border-radius: 15px;
+        padding:0px 10px;
+    }
+</style>

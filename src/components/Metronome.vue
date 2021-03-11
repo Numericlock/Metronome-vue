@@ -1,11 +1,19 @@
 <template>
-    <div class="metronome-wrapper">
+    <div class="metronome-wrapper dark">
         <div class="hand-wrapper">
             <Hand class="hand" :rotate="pendulumAngle"/>
         </div>
         <div class="musicalbar-view">
             <div v-for="n in oneMusicalBar" :key="n" :class="[{ 'beat-now': (n==beatNow+1) }, 'one-beat']"></div>
         </div>
+        <div class="hand-wrapper">
+            <Hand v-if="beatAngle%360==0" class="hand-ball" :rotate="beatAngle" style="background-color:black;"/>
+            <Hand v-else class="hand-ball" :rotate="beatAngle"/>
+        </div>
+      <!--  <div class="musicalbar-view" :style="{ width: edgeLength + 'px', height: edgeLength + 'px'}">
+            <div v-for="n in oneMusicalBar" :key="n" :class="[{ 'beat-now': (n==beatNow+1) }, 'one-beat2']" :style="{ top:beatSquare(n,'y') + 'px',left:beatSquare(n,'x')}"></div>
+        </div>
+        -->
         <div class="slider-wrapper">
             <button @click="runMetronome">run</button>
             <button @click="stopMetronome">stop</button>
@@ -29,7 +37,8 @@ let gainNode;
                 isMetronomeRunning: false,
                 beatTime:0,
                 swingAngle:90,
-                pendulumAngle2:0
+                beatAngle:0,
+                edgeLength:100
             }
         },
         components: {
@@ -67,6 +76,44 @@ let gainNode;
             },
             beatNow(){
                 return (this.beatTime+this.oneMusicalBar)%this.oneMusicalBar;
+            },
+            beatSquare(index,axis){
+                const edgeLength = this.edgeLength;
+                let coordinate;
+                if(axis == "x"){
+                    switch(index){
+                        case(1):
+                            coordinate = 0;
+                            break;
+                        case(2):
+                            coordinate = 0;
+                            break;
+                        case(3):
+                            coordinate = edgeLength;
+                            break;
+                        case(4):
+                            coordinate = edgeLength;
+                            break;
+                    }   
+                }else if(axis == "y"){
+                    switch(index){
+                        case(1):
+                            coordinate = 0;
+                            break;
+                        case(2):
+                            coordinate = edgeLength;
+                            break;
+                        case(3):
+                            coordinate = edgeLength;
+                            break;
+                        case(4):
+                            coordinate = 0;
+                            break;
+                    } 
+                }else{
+                    return;
+                }
+                return coordinate;
             }
         },
         methods: {
@@ -121,6 +168,9 @@ let gainNode;
                     source.start(0);
                 });
             },
+            beatAngleCount(){
+                this.beatAngle = this.beatAngle+(360/this.oneMusicalBar);
+            },
             beatLoop() {
                 if(this.isMetronomeRunning){
                    // this.beat.play();
@@ -128,6 +178,7 @@ let gainNode;
                     this.elapsedTime = this.beatTime*this.oneBeatSec();
                     console.log((this.beatTime*this.oneBeatSec())-this.elapsedTime);
                    // this.elapsedTime = this.beatTime*this.oneBeatSec();
+                    this.beatAngleCount();
                     this.soundBeat();
                     
                     const interval = this.oneBeatSec();
@@ -166,6 +217,11 @@ let gainNode;
             //this.elapsedTimeCountUp();
             //this.setBeat();
             //this.beatLoop();
+        },
+        watch:{
+            oneMusicalBar: function(){
+                this.beatAngle=0;
+            }
         }
     };
 </script>
@@ -177,11 +233,20 @@ let gainNode;
         .musicalbar-view{
             display: flex;
             justify-content: space-around;
+            position: relative;
             .one-beat{
                 border-radius: 100%;
                 height:10px;
                 width:10px;
                 background:red;
+            }
+            .one-beat2{
+                border-radius: 100%;
+                height:10px;
+                width:10px;
+                background:red;
+                position: absolute;
+                
             }
             .beat-now{
                 background:black;
@@ -189,12 +254,33 @@ let gainNode;
         }
         .hand-wrapper{
             height:200px;
+            position: relative;
             .hand {
                 position: absolute;
                 left: 150px;
                 top: 20px;
                 background:red;
             }
+            .hand-ball {
+                position: absolute;
+                border-radius:100%;
+                left: 150px;
+                top: 20px;
+                background:red;
+                width: 20px;
+                height: 20px;
+                transform-origin: 10px 60px;
+            }
         }
+    }
+    .dark {
+        color:white;
+        fill:white;
+        background: rgba( 62, 62, 62, 0.50 );
+        box-shadow: 0 8px 32px 0 rgba( 31, 38, 135, 0.37 );
+        backdrop-filter: blur( 5.0px );
+        -webkit-backdrop-filter: blur( 5.0px );
+        border-radius: 10px;
+        border: 1px solid rgba( 255, 255, 255, 0.18 );
     }
 </style>
