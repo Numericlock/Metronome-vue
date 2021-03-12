@@ -1,4 +1,6 @@
 <template>
+          <router-link class="tabbar-icon-wrapper" to="/">Home</router-link>
+          <router-link class="tabbar-icon-wrapper" to="/about">About</router-link>
   <router-view/>
 </template>
 

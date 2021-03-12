@@ -1,5 +1,7 @@
 <template>
   <div class="home">
+    <input type="range" v-model="vertex"  min="3" max="12"/>
+    <Polygon :vertex="vertex"/>
     <div class="metronome">
         <Metronome :bpm="bpm" :oneMusicalBar="oneMusicalBar2"/>
         <span>bpm</span><span>{{ bpm }}</span>
@@ -15,17 +17,20 @@
 </template>
 
 <script>
-import Metronome from '../components/Metronome.vue'; // @ is an alias to /src
+import Metronome from '../components/Metronome.vue'; 
+import Polygon from '../components/polygon.vue'; 
     export default{
         name: 'app',
         components: {
-            Metronome
+            Metronome,
+            Polygon
         },
         data() {
             return {
                 bpm:60,
                 oneMusicalBar:4,
-                musicalBarVals:[2,3,4,5,6]
+                musicalBarVals:[2,3,4,5,6],
+                vertex:5
             };
         },
         computed: {
