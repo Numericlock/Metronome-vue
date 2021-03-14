@@ -1,24 +1,24 @@
 <template>
   <div class="home">
     <div class="metronome">
-        <Metronome ref="metronome" :bpm="bpm" :oneMusicalBar="oneMusicalBar" :soundMusicalBar = "soundMusicalBar"/>
+        <Metronome ref="metronome" :bpm="bpm" :oneMusicalBar="oneMusical.bar" :soundMusicalBar = "soundMusicalBar"/>
     </div>
     <div class="metronome-controller">
         <div :class="['playback' ,{'pause': playbackNow}]" @click="suspend()"></div>
         <label>
             <span>bpm</span>
-            <input type="text" class="textbox" v-model="bpm">
+            <input type="text" class="textbox" v-model="bpm.bpm">
             🐢 
-            <input type="range" name="speed" v-model="bpm" min="1" max="300">
+            <input type="range" name="bpm" class="slider" :class="{'danger': bpm.isDanger}" v-model="bpm.bpm" :min="bpm.min" :max="bpm.max">
             🐰
         </label>
         <label>
             <input type="checkbox" v-model="soundMusicalBar"/>
-            <input type="text" class="textbox" v-model="oneMusicalBar">拍子毎
-            <input type="range" name="beat" v-model="oneMusicalBar" min="2" max="14">
+            <input type="text" class="textbox" v-model="oneMusical.bar">拍子毎
+            <input type="range" name="beat" class="slider" :class="{'danger': oneMusical.isDanger}" v-model="oneMusical.bar" :min="oneMusical.min" :max="oneMusical.max">
         </label>
     </div>
-    
+    {{oneMusical.isDanger}}
   </div>
 </template>
 
@@ -36,8 +36,18 @@ import Metronome from '../components/Metronome.vue';
         },
         data() {
             return {
-                bpm:60,
-                oneMusicalBar:4,
+                bpm:{
+                    bpm:60,
+                    min:1,
+                    max:300,
+                    isDanger:false
+                },
+                oneMusical:{
+                    bar:4,
+                    min:2,
+                    max:14,
+                    isDanger:false
+                },
                 musicalBarVals:[2,3,4,5,6,7,8,9,10,11,12,13,14],
                 vertex:5,
                 soundMusicalBar:true,
@@ -57,6 +67,16 @@ import Metronome from '../components/Metronome.vue';
             },
 
         },
+        watch:{
+            'oneMusical.bar'(){
+                if(this.oneMusical.bar>this.oneMusical.max)this.oneMusical.isDanger = true;
+                else this.oneMusical.isDanger = false;
+            },
+            'bpm.bpm'(){
+                if(this.bpm.bpm>this.bpm.max)this.bpm.isDanger = true;
+                else this.bpm.isDanger = false;
+            }
+        }
     };
 </script>
 <style lang="scss">
@@ -107,6 +127,23 @@ import Metronome from '../components/Metronome.vue';
     width:15px;
     transition: border-left 0.1s, border-right 0.1s ;
 }
+    .slider{
+        -webkit-appearance: none; // これ無しだとスタイルがほぼ全く反映されないので注意
+        appearance: none;
+        cursor: pointer; // カーソルを分かりやすく
+        background: #8acdff; // バーの背景色
+        height: 14px; // バーの高さ
+        width: 100%; // スライダーの幅
+        border-radius: 10px; // バーの端の丸み
+        border: solid 3px #dff1ff; // バーまわりの線
+        outline: 0; /* アウトラインを消して代わりにfocusのスタイルをあてる */
+        &:focus {
+            box-shadow: 0 0 3px rgb(0, 161, 255);
+        }
+    }
+    .danger{
+        background:red;
+    }
 
 
 </style>
