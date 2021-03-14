@@ -1,20 +1,46 @@
 <template>
-    <div>
-        <div v-if="vertex%2 == 1" class="lists--odd">
-          <h2>{{ vertex }}</h2>
-          <div class="polygon" :style="{width: size + 'px', height: size + 'px'}">
-            <div v-for="k in vertex*2" :key="k" class="rect"
-                :style="{width: sideLength + 'px' , height: apothem*2 + 'px' , transform: 'rotate(' + centralAngle*k + 'deg)'}"></div>
-          </div>
-        </div>
-        <div v-if="vertex%2 == 0" class="lists">
-          <h2>{{ vertex }}</h2>
-          <div class="polygon" :style="{width: size + 'px', height: size + 'px'}">
-            <div v-for="n in vertex/2" :key="n" class="rect"
-                :style="{width: sideLength + 'px' , height: apothem*2 + 'px' , transform: 'rotate(' + centralAngle*n + 'deg)'}"></div>
-          </div>
-        </div>    
+    <div :class="{'lists--odd':(vertex%2 == 1) , 'lists':(vertex%2 == 0)}" :style="circleSize">
+      <h2>{{  }}</h2>
+      <div class="polygon" :class="{'circle-border': border}" :style="{width: size + 'px', height: size + 'px', transform: 'rotate(' + polygonAngle + 'deg)'}">
+        <div v-for="n in rectNum" :key="n" class="rect"
+            :style="{width: sideLength + 'px' , height: rectHeight + 'px' , transform: 'rotate(' + centralAngle*n + 'deg)'}"></div>
+      </div>
     </div>
+    <!--<div>
+        <div v-if="isCircumscribed">
+            <div v-if="vertex%2 == 1" class="lists--odd">
+              <h2>{{ vertex }}</h2>
+              <div class="polygon" :class="{'circle-border': border}" :style="{width: size + 'px', height: size + 'px'}">
+                <div v-for="k in vertex*2" :key="k" class="rect"
+                    :style="{width: circumscribed + 'px' , height:'100%' , transform: 'rotate(' + centralAngle*k + 'deg)'}"></div>
+              </div>
+            </div>
+            <div v-if="vertex%2 == 0" class="lists">
+              <h2>{{ vertex }}</h2>
+              <div class="polygon" :class="{'circle-border': border}" :style="{width: size + 'px', height: size + 'px', transform: 'rotate(' + centralAngle/2 + 'deg)'}">
+                <div v-for="n in vertex/2" :key="n" class="rect"
+                    :style="{width: circumscribed + 'px' , height:'100%' , transform: 'rotate(' + centralAngle*n + 'deg)'}"></div>
+              </div>
+            </div>    
+        </div>
+        <div v-else>
+            <div v-if="vertex%2 == 1" class="lists--odd">
+              <h2>{{ vertex }}</h2>
+              <div class="polygon" :class="{'circle-border': border}" :style="{width: size + 'px', height: size + 'px'}">
+                <div v-for="k in vertex*2" :key="k" class="rect"
+                    :style="{width: sideLength + 'px' , height: apothem*2 + 'px' , transform: 'rotate(' + centralAngle*k + 'deg)'}"></div>
+              </div>
+            </div>
+            <div v-if="vertex%2 == 0" class="lists">
+              <h2>{{ vertex }}</h2>
+              <div class="polygon" :class="{'circle-border': border}" :style="{width: size + 'px', height: size + 'px', transform: 'rotate(' + centralAngle/2 + 'deg)'}">
+                <div v-for="n in vertex/2" :key="n" class="rect"
+                    :style="{width: sideLength + 'px' , height: apothem*2 + 'px' , transform: 'rotate(' + centralAngle*n + 'deg)'}"></div>
+              </div>
+            </div>    
+        </div>
+    </div>
+    -->
 </template>
 
 <script>
@@ -31,15 +57,42 @@
             size:{
                 type: Number,
                 default:400
+            },
+            isCircumscribed:{
+                type: Boolean,
+                default:false
+            },
+            border:{
+                type: Boolean,
+                default:true
             }
         },
         components: {
         },
         computed: {
+            //辺の長さを求める
             sideLength(){
-                const baseAngle = 180/this.vertex;
-                console.log(Math.sin(baseAngle*(Math.PI/180)));
-                return this.size*Math.sin(baseAngle*(Math.PI/180));
+                let baseAngle,sideLengthResult;
+                if(this.isCircumscribed){//円に外接する場合
+                    baseAngle = Math.PI/this.vertex;
+                    sideLengthResult = this.size*Math.tan(baseAngle);
+                }else{              //円に内接する場合
+                    baseAngle = 180/this.vertex; 
+                    sideLengthResult = this.size*Math.sin(baseAngle*(Math.PI/180));
+                }              
+                return sideLengthResult;
+            },
+            //短冊の長さを求める
+            rectHeight(){
+                let rectHeightResult;
+                if(this.isCircumscribed)rectHeightResult = '100%';
+                else rectHeightResult = this.apothem*2;
+
+                return rectHeightResult;
+            },
+            circumscribed(){
+                const baseAngle = Math.PI/this.vertex;
+                return this.size*Math.tan(baseAngle);      
             },
             apothem(){
                 const baseAngle = 180/this.vertex;
@@ -47,6 +100,22 @@
             },
             centralAngle(){
                 return 360/this.vertex;
+            },
+            rectNum(){
+                let num;
+                if(this.vertex%2 ==0)num = this.vertex/2;
+                else num = this.vertex*2;
+                return num;
+            },
+            polygonAngle(){
+                let result = 0;
+                if(this.vertex%2 ==0)result=this.centralAngle/2;
+                return result;
+            },
+            circleSize(){
+                return{
+                     '--circle-size' : this.size,
+                }
             }
         },
         method: {
@@ -100,10 +169,10 @@ $text-odd-color: #000;
   position: relative;
   display: inline-block;
   width: 10%;
-  min-width: $size * 1.5;
-  height: $size * 1.5;
+  min-width: $size;
+  height: $size;
   h2 {
-    font-size: 12px;
+    font-size: 22px;
     color: $text-even-color;
     font-family: 'Quattrocento Sans';
     z-index: 1;
@@ -116,12 +185,12 @@ $text-odd-color: #000;
     color: $text-odd-color;
   }
 }
-
+.circle-border{
+    border:solid 1px $border-color;
+}
 .polygon {
-  width: $size;
-  height: $size;
   @include center;
-    border:solid 1px black;
+    
     border-radius:100%;
   .rect {
     background: $rect-even-color;

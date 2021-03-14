@@ -1,28 +1,19 @@
 <template>
     <div class="metronome-wrapper dark">
-        <div class="hand-wrapper">
+        <!--<div class="hand-wrapper">
             <Hand class="hand" :rotate="pendulumAngle"/>
         </div>
         <div class="musicalbar-view">
             <div v-for="n in oneMusicalBar" :key="n" :class="[{ 'beat-now': (n==beatNow+1) }, 'one-beat']"></div>
         </div>
-        <div class="hand-wrapper">
-            <Hand v-if="beatAngle%360==0" class="hand-ball" :rotate="beatAngle" style="background-color:black;"/>
-            <Hand v-else class="hand-ball" :rotate="beatAngle"/>
-        </div>
-      <!--  <div class="musicalbar-view" :style="{ width: edgeLength + 'px', height: edgeLength + 'px'}">
-            <div v-for="n in oneMusicalBar" :key="n" :class="[{ 'beat-now': (n==beatNow+1) }, 'one-beat2']" :style="{ top:beatSquare(n,'y') + 'px',left:beatSquare(n,'x')}"></div>
-        </div>
-        -->
-        <div class="slider-wrapper">
-            <button @click="runMetronome">run</button>
-            <button @click="stopMetronome">stop</button>
-        </div>
+-->
+        <polygonMetronome :oneMusicalBar="oneMusicalBar" :beatAngle="beatAngle2" :beatNow="beatNow" :soundMusicalBar="soundMusicalBar"/>
     </div>
 </template>
 
 <script>
-import Hand from './Hand.vue'
+//import Hand from './Hand.vue'
+import polygonMetronome from './polygonMetronome.vue'
 const fs = window.fs;
 let source;
 let audioContext;
@@ -38,12 +29,12 @@ let gainNode;
                 beatTime:0,
                 swingAngle:90,
                 beatAngle:0,
-                edgeLength:100
+                edgeLength:100,
+                vertex:5
             }
         },
         components: {
-            Hand,
-            //VueSlider,
+            polygonMetronome
         },
         props:{
             bpm:{
@@ -56,6 +47,10 @@ let gainNode;
             },
             oneMusicalBar:{
                 type: Number,
+            },
+            soundMusicalBar:{
+                type: Boolean,
+                default:true
             }
         },
         computed: {
@@ -77,43 +72,8 @@ let gainNode;
             beatNow(){
                 return (this.beatTime+this.oneMusicalBar)%this.oneMusicalBar;
             },
-            beatSquare(index,axis){
-                const edgeLength = this.edgeLength;
-                let coordinate;
-                if(axis == "x"){
-                    switch(index){
-                        case(1):
-                            coordinate = 0;
-                            break;
-                        case(2):
-                            coordinate = 0;
-                            break;
-                        case(3):
-                            coordinate = edgeLength;
-                            break;
-                        case(4):
-                            coordinate = edgeLength;
-                            break;
-                    }   
-                }else if(axis == "y"){
-                    switch(index){
-                        case(1):
-                            coordinate = 0;
-                            break;
-                        case(2):
-                            coordinate = edgeLength;
-                            break;
-                        case(3):
-                            coordinate = edgeLength;
-                            break;
-                        case(4):
-                            coordinate = 0;
-                            break;
-                    } 
-                }else{
-                    return;
-                }
-                return coordinate;
+            beatAngle2(){
+                return this.beatAngle;
             }
         },
         methods: {
@@ -154,9 +114,8 @@ let gainNode;
             soundBeat() {
                 let beatVolume = 0.5;
                 console.log(this.oneMusicalBar);
-                if(this.oneMusicalBar!=0 && (this.beatTime%this.oneMusicalBar)==0){
+                if(this.oneMusicalBar!=0 && (this.beatTime%this.oneMusicalBar)==0 && this.soundMusicalBar){
                     beatVolume = 1;
-                    console.log("aa");
                 }
                 source = audioContext.createBufferSource();
                 audioContext.decodeAudioData(toArrayBuffer(textfile), function(buffer) {
@@ -209,9 +168,11 @@ let gainNode;
                 if(this.isMetronomeRunning){
                     this.isMetronomeRunning = false;
                     this.beatTime = 0;
+                    this.beatAngle = 0;
                     this.elapsedTime = 0;
                 }
-            }
+            },
+
         },
         mounted(){
             //this.elapsedTimeCountUp();
@@ -220,7 +181,8 @@ let gainNode;
         },
         watch:{
             oneMusicalBar: function(){
-                this.beatAngle=0;
+
+                this.beatAngle=((this.beatTime+this.oneMusicalBar)%this.oneMusicalBar)*(360/this.oneMusicalBar);
             }
         }
     };
@@ -230,6 +192,8 @@ let gainNode;
     .metronome-wrapper{
         display: flex;
         flex-direction: column;
+        align-items: center;
+        padding:20px;
         .musicalbar-view{
             display: flex;
             justify-content: space-around;
@@ -261,26 +225,28 @@ let gainNode;
                 top: 20px;
                 background:red;
             }
+        }
+        .handball-wrapper{
+            display:flex;
+            flex-direction: column;
+            align-items: center;
+            position:relative;
             .hand-ball {
                 position: absolute;
                 border-radius:100%;
-                left: 150px;
-                top: 20px;
                 background:red;
                 width: 20px;
                 height: 20px;
-                transform-origin: 10px 60px;
+                transform-origin: 10px 210px;
+                top:90px;
+                background: rgba( 62, 62, 62, 0.50 );
+                box-shadow: 0 8px 32px 0 rgba( 31, 38, 135, 0.37 );
+                backdrop-filter: blur( 5.0px );
+                -webkit-backdrop-filter: blur( 5.0px );
+                border-radius: 10px;
+                border: 1px solid rgba( 255, 255, 255, 0.18 );
             }
         }
     }
-    .dark {
-        color:white;
-        fill:white;
-        background: rgba( 62, 62, 62, 0.50 );
-        box-shadow: 0 8px 32px 0 rgba( 31, 38, 135, 0.37 );
-        backdrop-filter: blur( 5.0px );
-        -webkit-backdrop-filter: blur( 5.0px );
-        border-radius: 10px;
-        border: 1px solid rgba( 255, 255, 255, 0.18 );
-    }
+
 </style>
