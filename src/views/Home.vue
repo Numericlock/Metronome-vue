@@ -7,13 +7,13 @@
             <div :class="['playback' ,{'pause': playbackNow}]" @click="suspend()"></div>
             <label>
                 <span>bpm</span>
-                <input type="number" min="1" class="textbox" v-model="bpm.bpm">
-                <input type="range" name="bpm" class="slider" :class="{'danger': bpm.isDanger}" v-model="bpm.bpm" :min="bpm.min" :max="bpm.max">
+                <input type="number" min="1" class="textbox" :value="bpm.bpm" @input="bpmValidate">
+                <input type="range" name="bpm" class="slider" :class="{'danger': bpm.isDanger}" :value="bpm.bpm" @input="bpmValidate" :min="bpm.min" :max="bpm.max">
             </label>
             <label>
                 <input type="checkbox" v-model="soundMusicalBar" />
-                <input type="number" min="1" class="textbox" v-model="oneMusical.bar">拍子毎
-                <input type="range" name="beat" class="slider" :class="{'danger': oneMusical.isDanger}" v-model="oneMusical.bar" :min="oneMusical.min" :max="oneMusical.max">
+                <input type="number" min="1" class="textbox" :value="oneMusical.bar" @input="oneMusicalBarValidate">拍子毎
+                <input type="range" name="beat" class="slider" :class="{'danger': oneMusical.isDanger}" :value="oneMusical.bar" @input="oneMusicalBarValidate" :min="oneMusical.min" :max="oneMusical.max">
             </label>
         </div>
     </div>
@@ -61,6 +61,12 @@
                     this.$refs.metronome.runMetronome();
                 }
             },
+            oneMusicalBarValidate: function(e) {
+                this.oneMusical.bar=Number(e.target.value);
+            },
+            bpmValidate: function(e) {
+                this.bpm.bpm=Number(e.target.value);
+            },
 
         },
         watch: {
@@ -88,7 +94,7 @@
         padding: 10px;
 
         .metronome-controller {
-            position: absolute;
+            position:fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%,-50%);

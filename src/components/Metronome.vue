@@ -7,7 +7,7 @@
             <div v-for="n in oneMusicalBar" :key="n" :class="[{ 'beat-now': (n==beatNow+1) }, 'one-beat']"></div>
         </div>
 -->
-        <polygonMetronome :oneMusicalBar="oneMusicalBar" :beatAngle="beatAngle2" :beatNow="beatNow" :soundMusicalBar="soundMusicalBar" />
+        <polygonMetronome :oneMusicalBar="oneMusicalBar" :beatAngle="beatAngle" :beatNow="beatNow" :soundMusicalBar="soundMusicalBar" />
     </div>
 </template>
 
@@ -30,7 +30,8 @@
                 swingAngle: 90,
                 beatAngle: 0,
                 edgeLength: 100,
-                vertex: 5
+                vertex: 5,
+                beatTimer: ""
             }
         },
         components: {
@@ -54,26 +55,23 @@
             }
         },
         computed: {
-            pendulumAngle() {
-                const swingAngle = 90;
-                const swingProgress = this.elapsedTime % this.oneBeatSec(); //スイングの進捗ミリ秒
-                const swingProgressRate = (swingProgress / this.oneBeatSec()) * 100; //スイングの進捗割合
-                let angle;
-
-                if (swingProgressRate < 50) angle = (swingAngle / 2) - ((swingAngle / 2) * ((swingProgressRate * 2) / 100));
-                else if (swingProgressRate > 50) angle = -(swingAngle / 2) * (((swingProgressRate - 50) * 2) / 100);
-                else if (angle == 0) angle = (swingAngle / 2);
-                else angle = 0;
-                if (((Math.floor(this.elapsedTime / this.oneBeatSec())) % 2) == 1) {
-                    angle = angle * -1;
-                }
-                return Number(angle);
-            },
+           // pendulumAngle() {
+           //     const swingAngle = 90;
+           //     const swingProgress = this.elapsedTime % this.oneBeatSec(); //スイングの進捗ミリ秒
+           //     const swingProgressRate = (swingProgress / this.oneBeatSec()) * 100; //スイングの進捗割合
+           //     let angle;
+//
+//                if (swingProgressRate < 50) angle = (swingAngle / 2) - ((swingAngle / 2) * ((swingProgressRate * 2) / 100));
+//                else if (swingProgressRate > 50) angle = -(swingAngle / 2) * (((swingProgressRate - 50) * 2) / 100);
+//                else if (angle == 0) angle = (swingAngle / 2);
+//                else angle = 0;
+//                if (((Math.floor(this.elapsedTime / this.oneBeatSec())) % 2) == 1) {
+//                    angle = angle * -1;
+//                }
+//                return Number(angle);
+//            },
             beatNow() {
                 return (this.beatTime + this.oneMusicalBar) % this.oneMusicalBar;
-            },
-            beatAngle2() {
-                return this.beatAngle;
             }
         },
         methods: {
@@ -97,20 +95,20 @@
 
 
             //再描画間隔
-            rerenderInterval() {
-                const interval = 1000 / this.fps;
-                return interval;
-            },
+           // rerenderInterval() {
+           //     const interval = 1000 / this.fps;
+           //     return interval;
+           // },
             //再帰的に使える用の関数
-            elapsedTimeCountUp() {
-                if (this.isMetronomeRunning) {
-                    const interval = this.rerenderInterval();
-                    window.setTimeout(() => {
-                        this.elapsedTime = this.elapsedTime + interval;
-                        this.elapsedTimeCountUp();
-                    }, interval);
-                }
-            },
+           // elapsedTimeCountUp() {
+           //     if (this.isMetronomeRunning) {
+           //         const interval = this.rerenderInterval();
+           //         window.setTimeout(() => {
+           //             this.elapsedTime = this.elapsedTime + interval;
+           //             this.elapsedTimeCountUp();
+           //         }, interval);
+           //     }
+           // },
             soundBeat() {
                 let beatVolume = 0.5;
                 if (this.oneMusicalBar != 0 && (this.beatTime % this.oneMusicalBar) == 0 && this.soundMusicalBar) {
@@ -139,7 +137,7 @@
                     this.soundBeat();
 
                     const interval = this.oneBeatSec();
-                    window.setTimeout(() => {
+                    this.beatTimer = window.setTimeout(() => {
 
                         this.beatLoop();
                     }, interval);
@@ -147,7 +145,7 @@
             },
             setBeat() {
                 audioContext = new AudioContext;
-                textfile = fs.readFileSync('./public/beat.mp3', (err) => {
+                textfile = fs.readFileSync('./public/sounds/beat.mp3', (err) => {
                     if (err) throw err;
                 });
                 toArrayBuffer = function(buf) {
@@ -158,13 +156,14 @@
                 if (!this.isMetronomeRunning) {
                     this.isMetronomeRunning = true;
                     this.setBeat();
-                    this.elapsedTimeCountUp();
+                    //this.elapsedTimeCountUp();
                     this.beatLoop();
                 }
             },
             stopMetronome() {
                 if (this.isMetronomeRunning) {
                     this.isMetronomeRunning = false;
+                    clearInterval(this.beatTimer);
                     this.beatTime = 0;
                     this.beatAngle = 0;
                     this.elapsedTime = 0;
@@ -176,6 +175,10 @@
             //this.elapsedTimeCountUp();
             //this.setBeat();
             //this.beatLoop();
+                    this.isMetronomeRunning = true;
+                    this.setBeat();
+                    //this.elapsedTimeCountUp();
+                    this.beatLoop();
         },
         watch: {
             oneMusicalBar: function() {

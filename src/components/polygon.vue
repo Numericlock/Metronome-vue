@@ -195,7 +195,7 @@ $text-odd-color: #000;
   .rect {
     background: $rect-even-color;
     transform-origin: center center;
-     background: linear-gradient(to bottom, transparent 0%, transparent 50%, #fff 50%, #fff 100%);
+
 
     @include border;
     @include center;
