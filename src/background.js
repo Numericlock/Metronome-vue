@@ -13,19 +13,19 @@ protocol.registerSchemesAsPrivileged([
 async function createWindow() {
   // Create the browser window.
   const win = new BrowserWindow({
-    width: 1000,
+    width: 500,
     height: 515,
     webPreferences: {
         preload: path.join(__dirname, './preload.js'),
         enableRemoteModule: true,
         contextIsolation: false,
-        devTools: true,
+        devTools: false,
       // Use pluginOptions.nodeIntegration, leave this alone
       // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
       nodeIntegration: false,
     }
   })
-  //win.setMenu(null);
+  win.setMenu(null);
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
