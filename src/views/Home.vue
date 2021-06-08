@@ -18,18 +18,12 @@
         </div>
     </div>
 </template>
-
 <script>
     import Metronome from '../components/Metronome.vue';
-    //import flexibleTextbox from '../components/flexibleTextbox.vue'; 
-    //import Polygon from '../components/polygon.vue'; 
-
     export default {
         name: 'app',
         components: {
             Metronome,
-            //  flexibleTextbox
-            //   Polygon
         },
         data() {
             return {
@@ -57,15 +51,17 @@
                     this.playbackNow = false;
                     this.$refs.metronome.stopMetronome();
                 } else {
-                    this.playbackNow = true;
-                    this.$refs.metronome.runMetronome();
+                    if (this.bpm.bpm) {
+                        this.playbackNow = true;
+                        this.$refs.metronome.runMetronome();
+                    }
                 }
             },
             oneMusicalBarValidate: function(e) {
-                this.oneMusical.bar=Number(e.target.value);
+                this.oneMusical.bar = Number(e.target.value);
             },
             bpmValidate: function(e) {
-                this.bpm.bpm=Number(e.target.value);
+                this.bpm.bpm = Number(e.target.value);
             },
 
         },
@@ -90,21 +86,23 @@
         color: white;
         background: linear-gradient(-135deg, #E4A972, #39ACAC),
             linear-gradient(75deg, #E4A972, #9941D8, #79ffff)fixed;
-        border-radius: 15px;
+        background: linear-gradient(-135deg, rgba(228, 169, 114, 0.9), rgba(57, 172, 172, 0.9));
+        border-bottom-left-radius: 15%;
+        border-bottom-right-radius: 15%;
         padding: 10px;
 
         .metronome-controller {
-            position:fixed;
+            position: fixed;
             top: 50%;
             left: 50%;
-            transform: translate(-50%,-50%);
+            transform: translate(-50%, -50%);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: space-around;
             margin-top: 10px;
             padding: 20px 30px;
-            height:150px;
+            height: 150px;
             background: rgba(62, 62, 62, 0.50);
             box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
             backdrop-filter: blur(5.0px);
@@ -142,47 +140,42 @@
     }
 
     .slider {
-        -webkit-appearance: none; // これ無しだとスタイルがほぼ全く反映されないので注意
+        -webkit-appearance: none;
         appearance: none;
-        cursor: pointer; // カーソルを分かりやすく
-        background: #ddd; // バーの背景色
-        height: 3px; // バーの高さ
-        width: 100%; // スライダーの幅
-        border-radius: 10px; // バーの端の丸み
-        border: none; // バーまわりの線
+        cursor: pointer;
+        background: #ddd;
+        height: 3px;
+        width: 100%;
+        border-radius: 10px;
+        border: none;
         outline: 0;
 
-        /* アウトラインを消して代わりにfocusのスタイルをあてる */
         &:focus {
             box-shadow: 0 0 3px rgb(200, 200, 200);
         }
 
-        // -webkit-向けのつまみ
         &::-webkit-slider-thumb {
-            -webkit-appearance: none; // デフォルトのつまみのスタイルを解除
-            background: #ddd; // 背景色
-            width: 24px; // 幅
-            height: 24px; // 高さ
-            border-radius: 50%; // 円形に
-            box-shadow: 0px 3px 6px 0px rgba(0, 0, 0, 0.15); // 影
+            -webkit-appearance: none;
+            background: #ddd;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            box-shadow: 0px 3px 6px 0px rgba(0, 0, 0, 0.15);
         }
 
-        // -moz-向けのつまみ
         &::-moz-range-thumb {
-            background: #ddd; // 背景色
-            width: 24px; // 幅
-            height: 24px; // 高さ
-            border-radius: 50%; // 円形に
-            box-shadow: 0px 3px 6px 0px rgba(0, 0, 0, 0.15); // 影
-            border: none; // デフォルトの線を消す
+            background: #ddd;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            box-shadow: 0px 3px 6px 0px rgba(0, 0, 0, 0.15);
+            border: none;
         }
 
-        // Firefoxで点線が周りに表示されてしまう問題の解消
         &::-moz-focus-outer {
             border: 0;
         }
 
-        // つまみをドラッグしているときのスタイル
         &:active::-webkit-slider-thumb {
             box-shadow: 0px 5px 10px -2px rgba(0, 0, 0, 0.3);
         }
